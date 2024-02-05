@@ -149,7 +149,7 @@ const Signup = () => {
               <div className="flex items-center justify-between">
                 <p className="text-sm">Already Registered?</p>
                 <Link to="/login">
-                  <span className="text-sm hover:text-red-300  hover:transition-all duration-300">
+                  <span className="text-sm hover:text-red-300  hover:transition-all duration-300 underline">
                     Go to Login
                   </span>
                 </Link>

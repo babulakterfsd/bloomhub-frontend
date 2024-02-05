@@ -1,18 +1,31 @@
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useChangePasswordMutation } from '@/redux/api/authApi';
 import { useGetAllSoldProductsQuery } from '@/redux/api/sellApi';
 import { useCurrentShopkeeper } from '@/redux/features/authSlice';
 import { useAppSelector } from '@/redux/hook';
 import { TShopkeeper, TTimeframe } from '@/types/commonTypes';
 import { useState } from 'react';
-import { MdModeEdit } from 'react-icons/md';
+import { CiEdit } from 'react-icons/ci';
 import { RxCross2 } from 'react-icons/rx';
 import { toast } from 'sonner';
 import babul from '../../assets/images/babul.png';
 import Styles from '../../styles/home.module.css';
 
 const Profile = () => {
-  const [showModal, setShowModal] = useState<boolean>(false);
+  const [showProfileUpdateModal, setShowProfileUpdateModal] =
+    useState<boolean>(false);
+  const [showPasswordUpdateModal, setShowPasswordUpdateModal] =
+    useState<boolean>(false);
+  const [currentPassword, setCurrentPassword] = useState<string>('');
+  const [newPassword, setNewPassword] = useState<string>('');
   const [shopkeeperName, setShopkeeperName] = useState<string>('');
   const [profileImage, setProfileImage] = useState<string>('');
+  const [changePassword] = useChangePasswordMutation();
   const shopkeeper = useAppSelector(useCurrentShopkeeper);
   const { email: shopkeepersEmail, name } = shopkeeper as TShopkeeper;
 
@@ -31,8 +44,12 @@ const Profile = () => {
     refetchOnMountOrArgChange: true,
   });
 
-  const handleModal = () => {
-    setShowModal(!showModal);
+  const handleProfileUpdateModal = () => {
+    setShowProfileUpdateModal(!showProfileUpdateModal);
+  };
+
+  const handlePasswordUpdateModal = () => {
+    setShowPasswordUpdateModal(!showPasswordUpdateModal);
   };
 
   const handleUpdateProfile = (e: any) => {
@@ -47,9 +64,34 @@ const Profile = () => {
         shopkeeperName,
         profileImage,
       });
-      setShowModal(!showModal);
+      setShowProfileUpdateModal(!showProfileUpdateModal);
       setShopkeeperName('');
       setProfileImage('');
+    }
+  };
+
+  const handleUpdatePassword = async (e: any) => {
+    e.preventDefault();
+    if (!currentPassword || !newPassword) {
+      toast.error('Please fill all the fields', {
+        position: 'top-right',
+        duration: 1500,
+      });
+    } else {
+      const response = await changePassword({
+        currentPassword,
+        newPassword,
+      }).unwrap();
+
+      if (response?.statusCode === 200) {
+        toast.success('Password updated successfully', {
+          position: 'top-right',
+          duration: 1500,
+        });
+        setShowPasswordUpdateModal(!showPasswordUpdateModal);
+        setCurrentPassword('');
+        setNewPassword('');
+      }
     }
   };
 
@@ -75,13 +117,35 @@ const Profile = () => {
             <h3 className="text-sm">{shopkeepersEmail}</h3>
             <div
               className="absolute top-2 right-10 text-md text-red-300 hover:text-red-400 duration-300 transition-all ease-in-out cursor-pointer"
-              onClick={handleModal}
+              title="Update Account"
             >
-              <MdModeEdit />
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <CiEdit style={{ fontSize: '24px', fontWeight: 'bold' }} />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent style={{ background: 'white' }}>
+                  <DropdownMenuItem>
+                    <button
+                      onClick={handleProfileUpdateModal}
+                      className="text-md hover:text-red-300 transition-all duration-300 ease-out cursor-pointer"
+                    >
+                      Update Profile
+                    </button>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <button
+                      onClick={handlePasswordUpdateModal}
+                      className="text-md hover:text-red-300 transition-all duration-300 ease-out cursor-pointer"
+                    >
+                      Update Password
+                    </button>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            {/* modal */}
+            {/* profile update modal */}
             <div>
-              {showModal ? (
+              {showProfileUpdateModal ? (
                 <>
                   <div
                     className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none"
@@ -98,7 +162,7 @@ const Profile = () => {
                           </h3>
                           <button
                             className="text-2xl text-red-300 hover:text-red-700 hover:transition-all duration-300 ease-in-out"
-                            onClick={() => setShowModal(!showModal)}
+                            onClick={() => handleProfileUpdateModal()}
                           >
                             <RxCross2 />
                           </button>
@@ -154,6 +218,89 @@ const Profile = () => {
                             onClick={(e) => handleUpdateProfile(e)}
                           >
                             Update Profile
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="opacity-25 fixed inset-0 z-40 bg-black transition-all duration-300"></div>
+                </>
+              ) : null}
+            </div>
+            {/* password update modal */}
+            <div>
+              {showPasswordUpdateModal ? (
+                <>
+                  <div
+                    className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none"
+                    data-aos="zoom-in"
+                    data-aos-duration="500"
+                  >
+                    <div className="relative w-[370px] lg:w-[640px] my-6 mx-auto">
+                      {/*content*/}
+                      <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
+                        {/*header*/}
+                        <div className="flex items-start justify-between p-5 border-b border-solid border-slate-200 rounded-t">
+                          <h3 className="text-md font-semibold text-center">
+                            Update Password of {name}
+                          </h3>
+                          <button
+                            className="text-2xl text-red-300 hover:text-red-700 hover:transition-all duration-300 ease-in-out"
+                            onClick={() => handlePasswordUpdateModal()}
+                          >
+                            <RxCross2 />
+                          </button>
+                        </div>
+                        {/*body*/}
+                        <form className="py-6 px-10">
+                          <div className="grid gap-4 grid-cols-1 sm:gap-x-6 sm:gap-y-4">
+                            {/*  current password */}
+                            <div className="w-full">
+                              <label
+                                htmlFor="currentpassword"
+                                className="block mb-2 text-sm font-medium "
+                              >
+                                Current Password
+                              </label>
+
+                              <input
+                                type="password"
+                                name="currentpassword"
+                                id="currentpassword"
+                                className="text-sm rounded-lg block w-full p-2.5 bg-gray-50 border-gray-600  focus:outline-none"
+                                placeholder="e.g. awal123"
+                                required
+                                onChange={(e) =>
+                                  setCurrentPassword(e.target.value)
+                                }
+                              />
+                            </div>
+                            {/* new password */}
+                            <div className="w-full">
+                              <label
+                                htmlFor="newpassword"
+                                className="block mb-2 text-sm font-medium"
+                              >
+                                New Password
+                              </label>
+
+                              <input
+                                type="password"
+                                name="newpassword"
+                                id="newpassword"
+                                className="text-sm rounded-lg block w-full p-2.5 bg-gray-50 border-gray-600  focus:outline-none"
+                                placeholder="e.g. newpassword123"
+                                required
+                                onChange={(e) => setNewPassword(e.target.value)}
+                              />
+                            </div>
+                          </div>
+                          <button
+                            type="submit"
+                            className="bg-red-300 rounded-md px-4 py-2 cursor-pointer text-white hover:bg-red-400 transition-colors duration-300 ease-in-out flex items-center space-x-2 mt-6 ml-auto"
+                            onClick={(e) => handleUpdatePassword(e)}
+                          >
+                            Update Password
                           </button>
                         </form>
                       </div>

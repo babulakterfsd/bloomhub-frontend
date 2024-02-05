@@ -34,11 +34,13 @@ const baseQueryWithRefreshToken: BaseQueryFn<
 > = async (args, api, extraOptions): Promise<any> => {
   let result = await baseQuery(args, api, extraOptions);
 
+  console.log('result', result?.error);
+
   if (result?.error) {
     const errorMessage = (result.error.data as any)?.message;
     toast.error(errorMessage || 'Something went wrong', {
       position: 'top-right',
-      duration: 1500,
+      duration: 2500,
       icon: '🚨',
     });
   }
