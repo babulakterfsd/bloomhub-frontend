@@ -91,6 +91,11 @@ const Profile = () => {
         setShowPasswordUpdateModal(!showPasswordUpdateModal);
         setCurrentPassword('');
         setNewPassword('');
+      } else {
+        toast.error('Password update failed', {
+          position: 'top-right',
+          duration: 1500,
+        });
       }
     }
   };
