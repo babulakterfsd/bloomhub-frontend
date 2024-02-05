@@ -4,13 +4,13 @@ import {
 } from '@/redux/features/authSlice';
 import { useAppDispatch, useAppSelector } from '@/redux/hook';
 import { TCurrentShopkeeper } from '@/types/commonTypes';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FaSellsy, FaUserTie } from 'react-icons/fa';
 import { IoMdHome, IoMdLogOut } from 'react-icons/io';
 import { LiaSitemapSolid } from 'react-icons/lia';
 import { RxCross2 } from 'react-icons/rx';
 import { TbHistory } from 'react-icons/tb';
-import { Link, Outlet } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import logo from '../../public/flowers.png';
 import Styles from '../styles/home.module.css';
@@ -21,6 +21,19 @@ const DashboardLayout = () => {
   const dispatch = useAppDispatch();
   const shopkeeperInfo = useAppSelector(useCurrentShopkeeper);
   const { name } = shopkeeperInfo as TCurrentShopkeeper;
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname === '/dashboard') {
+      setActiveDashboardRoute('productmanagement');
+    } else if (location.pathname === '/dashboard/profile') {
+      setActiveDashboardRoute('profile');
+    } else if (location.pathname === '/dashboard/salesmanagement') {
+      setActiveDashboardRoute('sellsmanagement');
+    } else if (location.pathname === '/dashboard/saleshistory') {
+      setActiveDashboardRoute('sellshistory');
+    }
+  }, [location.pathname, dispatch, shopkeeperInfo]);
 
   const handleLogout = () => {
     toast.success('Logout Successful', {
