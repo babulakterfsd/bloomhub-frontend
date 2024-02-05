@@ -11,7 +11,6 @@ import Styles from '../../styles/home.module.css';
 
 const Profile = () => {
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [timeframe, setTimeframe] = useState<TTimeframe>('alltime');
   const [shopkeeperName, setShopkeeperName] = useState<string>('');
   const [profileImage, setProfileImage] = useState<string>('');
   const shopkeeper = useAppSelector(useCurrentShopkeeper);
@@ -19,6 +18,7 @@ const Profile = () => {
 
   let page = '1';
   let limit = '10000';
+  let timeframe: TTimeframe = 'alltime';
 
   let allFilters = {
     page,
@@ -27,7 +27,7 @@ const Profile = () => {
     timeframe,
   };
 
-  const { data, isLoading, error } = useGetAllSoldProductsQuery(allFilters, {
+  const { data, isLoading } = useGetAllSoldProductsQuery(allFilters, {
     refetchOnMountOrArgChange: true,
   });
 
