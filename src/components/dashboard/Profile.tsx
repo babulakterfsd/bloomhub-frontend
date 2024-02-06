@@ -24,7 +24,7 @@ const Profile = () => {
   const [currentPassword, setCurrentPassword] = useState<string>('');
   const [newPassword, setNewPassword] = useState<string>('');
   const [shopkeeperName, setShopkeeperName] = useState<string>('');
-  const [profileImage, setProfileImage] = useState<string>('');
+  const [profileImage, setProfileImage] = useState('' as any);
   const [changePassword] = useChangePasswordMutation();
   const shopkeeper = useAppSelector(useCurrentShopkeeper);
   const { email: shopkeepersEmail, name } = shopkeeper as TShopkeeper;
@@ -64,7 +64,7 @@ const Profile = () => {
         shopkeeperName,
         profileImage,
       });
-      setShowProfileUpdateModal(!showProfileUpdateModal);
+      // setShowProfileUpdateModal(!showProfileUpdateModal);
       setShopkeeperName('');
       setProfileImage('');
     }
@@ -211,9 +211,13 @@ const Profile = () => {
                                 id="profileimage"
                                 className="text-sm rounded-lg block w-full p-2.5 bg-gray-50 border-gray-600  focus:outline-none"
                                 required
-                                onChange={(e) =>
-                                  setProfileImage(e.target.value)
-                                }
+                                onChange={(e) => {
+                                  const selectedFile =
+                                    e.target.files && e.target.files[0];
+                                  if (selectedFile) {
+                                    setProfileImage(selectedFile);
+                                  }
+                                }}
                               />
                             </div>
                           </div>
