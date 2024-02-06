@@ -4,7 +4,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useChangePasswordMutation } from '@/redux/api/authApi';
+import {
+  useChangePasswordMutation,
+  useGetProfileQuery,
+  useUpdateProfileMutation,
+} from '@/redux/api/authApi';
 import { useGetAllSoldProductsQuery } from '@/redux/api/sellApi';
 import { useCurrentShopkeeper } from '@/redux/features/authSlice';
 import { useAppSelector } from '@/redux/hook';
@@ -13,7 +17,7 @@ import { useState } from 'react';
 import { CiEdit } from 'react-icons/ci';
 import { RxCross2 } from 'react-icons/rx';
 import { toast } from 'sonner';
-import babul from '../../assets/images/babul.png';
+import demoPic from '../../assets/images/babul.png';
 import Styles from '../../styles/home.module.css';
 
 const Profile = () => {
@@ -26,6 +30,10 @@ const Profile = () => {
   const [shopkeeperName, setShopkeeperName] = useState<string>('');
   const [profileImage, setProfileImage] = useState('' as any);
   const [changePassword] = useChangePasswordMutation();
+  const [updateProfile] = useUpdateProfileMutation();
+  const { data: profileData, isLoading: isProfileLoading } =
+    useGetProfileQuery(undefined);
+  const shopkeeperProfileFromDb = profileData?.data;
   const shopkeeper = useAppSelector(useCurrentShopkeeper);
   const { email: shopkeepersEmail, name } = shopkeeper as TShopkeeper;
 
@@ -52,21 +60,34 @@ const Profile = () => {
     setShowPasswordUpdateModal(!showPasswordUpdateModal);
   };
 
-  const handleUpdateProfile = (e: any) => {
+  const handleUpdateProfile = async (e: any) => {
     e.preventDefault();
-    if (!profileImage || !shopkeeperName) {
+    if (!shopkeeperName) {
       toast.error('Please fill all the fields', {
         position: 'top-right',
         duration: 1500,
       });
     } else {
-      console.log({
-        shopkeeperName,
+      const dataToBeUpdated = {
+        name: shopkeeperName,
         profileImage,
-      });
-      // setShowProfileUpdateModal(!showProfileUpdateModal);
-      setShopkeeperName('');
-      setProfileImage('');
+      };
+      const response = await updateProfile(dataToBeUpdated).unwrap();
+
+      if (response?.statusCode === 200) {
+        toast.success('Profile updated successfully', {
+          position: 'top-right',
+          duration: 1500,
+        });
+        setShowProfileUpdateModal(!showProfileUpdateModal);
+        setShopkeeperName('');
+        setProfileImage('');
+      } else {
+        toast.error('Profile update failed', {
+          position: 'top-right',
+          duration: 1500,
+        });
+      }
     }
   };
 
@@ -113,13 +134,37 @@ const Profile = () => {
       <div className="lg:w-11/12 lg:mx-auto">
         <div className="grid grid-cols-12 gap-y-8 lg:gap-x-12 mt-6 md:mt-8 lg:mt-14">
           <div className="h-44 col-span-12 md:col-span-6 py-5 px-3 shadow-md rounded-md flex flex-col justify-center items-center relative">
-            <img
-              src={babul}
-              alt="babul"
-              className="h-20 w-20 rounded-full object-cover"
-            />
-            <h3 className="text-xl font-semibold mt-4">{name}</h3>
-            <h3 className="text-sm">{shopkeepersEmail}</h3>
+            {isLoading ? (
+              <>
+                <img
+                  src={
+                    shopkeeperProfileFromDb?.profileImage
+                      ? shopkeeperProfileFromDb?.profileImage
+                      : demoPic
+                  }
+                  alt={name}
+                  className="h-20 w-20 rounded-full object-cover"
+                />
+                <h3 className="text-xl font-semibold mt-4">{name}</h3>
+                <h3 className="text-sm">{shopkeepersEmail}</h3>
+              </>
+            ) : (
+              <>
+                <img
+                  src={
+                    shopkeeperProfileFromDb?.profileImage
+                      ? shopkeeperProfileFromDb?.profileImage
+                      : demoPic
+                  }
+                  alt={shopkeeperProfileFromDb?.name}
+                  className="h-20 w-20 rounded-full object-cover"
+                />
+                <h3 className="text-xl font-semibold mt-4">
+                  {shopkeeperProfileFromDb?.name}
+                </h3>
+                <h3 className="text-sm">{shopkeeperProfileFromDb?.email}</h3>
+              </>
+            )}
             <div
               className="absolute top-2 right-10 text-md text-red-300 hover:text-red-400 duration-300 transition-all ease-in-out cursor-pointer"
               title="Update Account"
@@ -163,7 +208,10 @@ const Profile = () => {
                         {/*header*/}
                         <div className="flex items-start justify-between p-5 border-b border-solid border-slate-200 rounded-t">
                           <h3 className="text-md font-semibold text-center">
-                            Update Profile of {name}
+                            Update Profile of{' '}
+                            {shopkeeperProfileFromDb?.name
+                              ? shopkeeperProfileFromDb?.name
+                              : name}
                           </h3>
                           <button
                             className="text-2xl text-red-300 hover:text-red-700 hover:transition-all duration-300 ease-in-out"
