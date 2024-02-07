@@ -21,21 +21,25 @@ import demoPic from '../../assets/images/babul.png';
 import Styles from '../../styles/home.module.css';
 
 const Profile = () => {
-  const [showProfileUpdateModal, setShowProfileUpdateModal] =
+  const [showNameUpdateModal, setShowNameUpdateModal] =
+    useState<boolean>(false);
+  const [showProfilePhotoUpdateModal, setShowProfilePhotoUpdateModal] =
     useState<boolean>(false);
   const [showPasswordUpdateModal, setShowPasswordUpdateModal] =
     useState<boolean>(false);
   const [currentPassword, setCurrentPassword] = useState<string>('');
   const [newPassword, setNewPassword] = useState<string>('');
-  const [shopkeeperName, setShopkeeperName] = useState<string>('');
-  const [profileImage, setProfileImage] = useState('' as any);
-  let [updateProfileOngoing, setUpdateProfileOngoing] = useState(false);
+  const [shopkeeperNewName, setShopkeeperNewName] = useState<string>('');
+  const [newProfileImage, setNewProfileImage] = useState('' as any);
+  const [updateProfilePhotoOngoing, setUpdateProfilePhotoOngoing] =
+    useState(false);
   const [changePassword] = useChangePasswordMutation();
   const [updateProfile] = useUpdateProfileMutation();
   const { data: profileData } = useGetProfileQuery(undefined);
   const shopkeeperProfileFromDb = profileData?.data;
   const shopkeeper = useAppSelector(useCurrentShopkeeper);
-  const { email: shopkeepersEmail, name } = shopkeeper as TShopkeeper;
+  const { email: shopkeepersEmail, name: shopkeepersNameInLocalStorage } =
+    shopkeeper as TShopkeeper;
 
   let page = '1';
   let limit = '10000';
@@ -52,72 +56,115 @@ const Profile = () => {
     refetchOnMountOrArgChange: true,
   });
 
-  const handleProfileUpdateModal = () => {
-    setShowProfileUpdateModal(!showProfileUpdateModal);
-  };
-
-  const handlePasswordUpdateModal = () => {
-    setShowPasswordUpdateModal(!showPasswordUpdateModal);
-  };
-
-  const handleUpdateProfile = async (e: any) => {
+  // handle profile image upload
+  const handleProfilePhotoUpload = (e: any) => {
     e.preventDefault();
-    if (!shopkeeperName && !profileImage) {
-      toast.error('Both field is empty', {
+    setUpdateProfilePhotoOngoing(true);
+
+    const preset_key = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+    const cloud_name = import.meta.env.VITE_CLODINARY_CLOUD_NAME;
+
+    const formData = new FormData();
+
+    if (!newProfileImage) {
+      setUpdateProfilePhotoOngoing(false);
+      toast.error('Please select an image to upload', {
+        position: 'top-right',
+        duration: 1500,
+      });
+      return;
+    }
+
+    // check if image size is less than 1MB and type is jpg, jpeg or png
+    if (newProfileImage) {
+      if (newProfileImage.size > 1024 * 1024) {
+        setUpdateProfilePhotoOngoing(false);
+        toast.error('Image size should be less than 1MB', {
+          position: 'top-right',
+          duration: 1500,
+        });
+        return;
+      } else if (
+        newProfileImage.type !== 'image/jpeg' &&
+        newProfileImage.type !== 'image/jpg' &&
+        newProfileImage.type !== 'image/png'
+      ) {
+        setUpdateProfilePhotoOngoing(false);
+        toast.error('We accept only jpg, jpeg and png type images', {
+          position: 'top-right',
+          duration: 1500,
+        });
+        return;
+      } else {
+        formData.append('file', newProfileImage);
+        formData.append('upload_preset', preset_key);
+      }
+    }
+
+    fetch(`https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`, {
+      method: 'POST',
+      body: formData,
+    })
+      .then((response) => response.json())
+      .then(async (data) => {
+        const response = await updateProfile({
+          name: shopkeeperProfileFromDb?.name,
+          profileImage: data?.secure_url
+            ? data?.secure_url
+            : shopkeeperProfileFromDb?.profileImage,
+        }).unwrap();
+
+        if (response?.statusCode === 200) {
+          toast.success('Profile photo updated successfully', {
+            position: 'top-right',
+            duration: 1500,
+          });
+          setShowProfilePhotoUpdateModal(!showProfilePhotoUpdateModal);
+          setUpdateProfilePhotoOngoing(false);
+          setNewProfileImage('');
+        } else {
+          toast.error('Profile photo update failed', {
+            position: 'top-right',
+            duration: 1500,
+          });
+          setUpdateProfilePhotoOngoing(false);
+        }
+      })
+      .catch(() => {
+        toast.error('Image upload failed', {
+          position: 'top-right',
+          duration: 1500,
+        });
+        setUpdateProfilePhotoOngoing(false);
+      });
+  };
+
+  // handle profile Name update
+  const handleUpdateProfileName = async (e: any) => {
+    e.preventDefault();
+
+    if (!shopkeeperNewName) {
+      toast.error('Whats the new name to be updated?', {
         position: 'top-right',
         duration: 1500,
       });
     } else {
-      setUpdateProfileOngoing(true);
-      const formData = new FormData();
-
-      if (profileImage) {
-        if (profileImage.size > 1024 * 1024) {
-          setUpdateProfileOngoing(false);
-          toast.error('Image size should be less than 1MB', {
-            position: 'top-right',
-            duration: 1500,
-          });
-          return;
-        } else if (
-          profileImage.type !== 'image/jpeg' &&
-          profileImage.type !== 'image/jpg' &&
-          profileImage.type !== 'image/png'
-        ) {
-          setUpdateProfileOngoing(false);
-          toast.error('We accept only jpg, jpeg and png type images', {
-            position: 'top-right',
-            duration: 1500,
-          });
-          return;
-        }
-      }
-
-      if (!profileImage && shopkeeperName) {
-        formData.append('name', shopkeeperName);
-      } else if (!shopkeeperName && profileImage) {
-        formData.append('file', profileImage);
-      }
-
-      if (shopkeeperName && profileImage) {
-        formData.append('name', shopkeeperName);
-        formData.append('file', profileImage);
-      }
-
-      const response = await updateProfile(formData).unwrap();
+      const response = await updateProfile({
+        name: shopkeeperNewName
+          ? shopkeeperNewName
+          : shopkeeperProfileFromDb?.name,
+        profileImage: shopkeeperProfileFromDb?.profileImage,
+      }).unwrap();
 
       if (response?.statusCode === 200) {
-        setUpdateProfileOngoing(false);
-        toast.success('Profile updated successfully', {
+        toast.success('Name updated successfully', {
           position: 'top-right',
           duration: 1500,
         });
-        setShowProfileUpdateModal(!showProfileUpdateModal);
-        setShopkeeperName('');
-        setProfileImage('');
+        setShowNameUpdateModal(!showNameUpdateModal);
+        setShopkeeperNewName('');
       } else {
-        setUpdateProfileOngoing(false);
-        toast.error('Profile update failed', {
+        toast.error('Name update failed', {
           position: 'top-right',
           duration: 1500,
         });
@@ -127,6 +174,18 @@ const Profile = () => {
 
   const handleUpdatePassword = async (e: any) => {
     e.preventDefault();
+
+    if (shopkeeperProfileFromDb?.email === 'xpawal@gmail.com') {
+      toast.error(
+        `Any visitor may use this demo account, so you can't change this account's password`,
+        {
+          position: 'top-right',
+          duration: 1500,
+        }
+      );
+      return;
+    }
+
     if (!currentPassword || !newPassword) {
       toast.error('Please fill all the fields', {
         position: 'top-right',
@@ -198,15 +257,23 @@ const Profile = () => {
                 <DropdownMenuContent style={{ background: 'white' }}>
                   <DropdownMenuItem>
                     <button
-                      onClick={handleProfileUpdateModal}
+                      onClick={() => setShowNameUpdateModal(true)}
                       className="text-md hover:text-red-300 transition-all duration-300 ease-out cursor-pointer"
                     >
-                      Update Profile
+                      Update Name
                     </button>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <button
-                      onClick={handlePasswordUpdateModal}
+                      onClick={() => setShowProfilePhotoUpdateModal(true)}
+                      className="text-md hover:text-red-300 transition-all duration-300 ease-out cursor-pointer"
+                    >
+                      Update Profile Photo
+                    </button>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <button
+                      onClick={() => setShowPasswordUpdateModal(true)}
                       className="text-md hover:text-red-300 transition-all duration-300 ease-out cursor-pointer"
                     >
                       Update Password
@@ -215,9 +282,9 @@ const Profile = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            {/* profile update modal */}
+            {/* profile Name update modal */}
             <div>
-              {showProfileUpdateModal ? (
+              {showNameUpdateModal ? (
                 <>
                   <div
                     className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none"
@@ -230,14 +297,13 @@ const Profile = () => {
                         {/*header*/}
                         <div className="flex items-start justify-between p-5 border-b border-solid border-slate-200 rounded-t">
                           <h3 className="text-md font-semibold text-center">
-                            Update Profile of{' '}
                             {shopkeeperProfileFromDb?.name
                               ? shopkeeperProfileFromDb?.name
-                              : name}
+                              : shopkeepersNameInLocalStorage}
                           </h3>
                           <button
                             className="text-2xl text-red-300 hover:text-red-700 hover:transition-all duration-300 ease-in-out"
-                            onClick={() => handleProfileUpdateModal()}
+                            onClick={() => setShowNameUpdateModal(false)}
                           >
                             <RxCross2 />
                           </button>
@@ -259,20 +325,65 @@ const Profile = () => {
                                 name="shopkeepername"
                                 id="shopkeepername"
                                 className="text-sm rounded-lg block w-full p-2.5 bg-gray-50 border-gray-600  focus:outline-none"
-                                placeholder="e.g. Babul Akter"
+                                placeholder={`e.g. ${shopkeepersNameInLocalStorage}`}
                                 required
                                 onChange={(e) =>
-                                  setShopkeeperName(e.target.value)
+                                  setShopkeeperNewName(e.target.value)
                                 }
                               />
                             </div>
+                          </div>
+                          <button
+                            type="submit"
+                            className="bg-red-300 rounded-md px-4 py-2 cursor-pointer text-white hover:bg-red-400 transition-colors duration-300 ease-in-out flex items-center space-x-2 mt-6 ml-auto disabled:cursor-not-allowed disabled:bg-gray-300"
+                            onClick={(e) => handleUpdateProfileName(e)}
+                          >
+                            Update Name
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="opacity-25 fixed inset-0 z-40 bg-black transition-all duration-300"></div>
+                </>
+              ) : null}
+            </div>
+            {/* profile photo update modal */}
+            <div>
+              {showProfilePhotoUpdateModal ? (
+                <>
+                  <div
+                    className="justify-center items-center flex overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none"
+                    data-aos="zoom-in"
+                    data-aos-duration="500"
+                  >
+                    <div className="relative w-[370px] lg:w-[640px] my-6 mx-auto">
+                      {/*content*/}
+                      <div className="border-0 rounded-lg shadow-lg relative flex flex-col w-full bg-white outline-none focus:outline-none">
+                        {/*header*/}
+                        <div className="flex items-start justify-between p-5 border-b border-solid border-slate-200 rounded-t">
+                          <h3 className="text-md font-semibold text-center">
+                            Update Profile Photo
+                          </h3>
+                          <button
+                            className="text-2xl text-red-300 hover:text-red-700 hover:transition-all duration-300 ease-in-out"
+                            onClick={() =>
+                              setShowProfilePhotoUpdateModal(false)
+                            }
+                          >
+                            <RxCross2 />
+                          </button>
+                        </div>
+                        {/*body*/}
+                        <form className="py-6 px-10">
+                          <div className="grid gap-4 grid-cols-1 sm:gap-x-6 sm:gap-y-4">
                             {/* profile image */}
                             <div className="w-full">
                               <label
                                 htmlFor="profileimage"
                                 className="block mb-2 text-sm font-medium "
                               >
-                                Profile Image
+                                Profile Photo
                               </label>
 
                               <input
@@ -285,7 +396,7 @@ const Profile = () => {
                                   const selectedFile =
                                     e.target.files && e.target.files[0];
                                   if (selectedFile) {
-                                    setProfileImage(selectedFile);
+                                    setNewProfileImage(selectedFile);
                                   }
                                 }}
                               />
@@ -294,10 +405,10 @@ const Profile = () => {
                           <button
                             type="submit"
                             className="bg-red-300 rounded-md px-4 py-2 cursor-pointer text-white hover:bg-red-400 transition-colors duration-300 ease-in-out flex items-center space-x-2 mt-6 ml-auto disabled:cursor-not-allowed disabled:bg-gray-300"
-                            onClick={(e) => handleUpdateProfile(e)}
-                            disabled={updateProfileOngoing}
+                            onClick={(e) => handleProfilePhotoUpload(e)}
+                            disabled={updateProfilePhotoOngoing}
                           >
-                            {updateProfileOngoing
+                            {updateProfilePhotoOngoing
                               ? 'Updating Profile'
                               : 'Update Profile'}
                           </button>
@@ -324,11 +435,11 @@ const Profile = () => {
                         {/*header*/}
                         <div className="flex items-start justify-between p-5 border-b border-solid border-slate-200 rounded-t">
                           <h3 className="text-md font-semibold text-center">
-                            Update Password of {name}
+                            Update Password
                           </h3>
                           <button
                             className="text-2xl text-red-300 hover:text-red-700 hover:transition-all duration-300 ease-in-out"
-                            onClick={() => handlePasswordUpdateModal()}
+                            onClick={() => setShowPasswordUpdateModal(false)}
                           >
                             <RxCross2 />
                           </button>
