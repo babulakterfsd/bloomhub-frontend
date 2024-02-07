@@ -29,10 +29,10 @@ const Profile = () => {
   const [newPassword, setNewPassword] = useState<string>('');
   const [shopkeeperName, setShopkeeperName] = useState<string>('');
   const [profileImage, setProfileImage] = useState('' as any);
+  let [updateProfileOngoing, setUpdateProfileOngoing] = useState(false);
   const [changePassword] = useChangePasswordMutation();
   const [updateProfile] = useUpdateProfileMutation();
-  const { data: profileData, isLoading: isProfileLoading } =
-    useGetProfileQuery(undefined);
+  const { data: profileData } = useGetProfileQuery(undefined);
   const shopkeeperProfileFromDb = profileData?.data;
   const shopkeeper = useAppSelector(useCurrentShopkeeper);
   const { email: shopkeepersEmail, name } = shopkeeper as TShopkeeper;
@@ -62,19 +62,52 @@ const Profile = () => {
 
   const handleUpdateProfile = async (e: any) => {
     e.preventDefault();
-    if (!shopkeeperName) {
-      toast.error('Please fill all the fields', {
+    if (!shopkeeperName && !profileImage) {
+      toast.error('Both field is empty', {
         position: 'top-right',
         duration: 1500,
       });
     } else {
-      const dataToBeUpdated = {
-        name: shopkeeperName,
-        profileImage,
-      };
-      const response = await updateProfile(dataToBeUpdated).unwrap();
+      setUpdateProfileOngoing(true);
+      const formData = new FormData();
+
+      if (profileImage) {
+        if (profileImage.size > 1024 * 1024) {
+          setUpdateProfileOngoing(false);
+          toast.error('Image size should be less than 1MB', {
+            position: 'top-right',
+            duration: 1500,
+          });
+          return;
+        } else if (
+          profileImage.type !== 'image/jpeg' &&
+          profileImage.type !== 'image/jpg' &&
+          profileImage.type !== 'image/png'
+        ) {
+          setUpdateProfileOngoing(false);
+          toast.error('We accept only jpg, jpeg and png type images', {
+            position: 'top-right',
+            duration: 1500,
+          });
+          return;
+        }
+      }
+
+      if (!profileImage && shopkeeperName) {
+        formData.append('name', shopkeeperName);
+      } else if (!shopkeeperName && profileImage) {
+        formData.append('file', profileImage);
+      }
+
+      if (shopkeeperName && profileImage) {
+        formData.append('name', shopkeeperName);
+        formData.append('file', profileImage);
+      }
+
+      const response = await updateProfile(formData).unwrap();
 
       if (response?.statusCode === 200) {
+        setUpdateProfileOngoing(false);
         toast.success('Profile updated successfully', {
           position: 'top-right',
           duration: 1500,
@@ -83,6 +116,7 @@ const Profile = () => {
         setShopkeeperName('');
         setProfileImage('');
       } else {
+        setUpdateProfileOngoing(false);
         toast.error('Profile update failed', {
           position: 'top-right',
           duration: 1500,
@@ -271,10 +305,13 @@ const Profile = () => {
                           </div>
                           <button
                             type="submit"
-                            className="bg-red-300 rounded-md px-4 py-2 cursor-pointer text-white hover:bg-red-400 transition-colors duration-300 ease-in-out flex items-center space-x-2 mt-6 ml-auto"
+                            className="bg-red-300 rounded-md px-4 py-2 cursor-pointer text-white hover:bg-red-400 transition-colors duration-300 ease-in-out flex items-center space-x-2 mt-6 ml-auto disabled:cursor-not-allowed disabled:bg-gray-300"
                             onClick={(e) => handleUpdateProfile(e)}
+                            disabled={updateProfileOngoing}
                           >
-                            Update Profile
+                            {updateProfileOngoing
+                              ? 'Updating Profile'
+                              : 'Update Profile'}
                           </button>
                         </form>
                       </div>
