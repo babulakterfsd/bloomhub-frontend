@@ -169,19 +169,7 @@ const Profile = () => {
         <div className="grid grid-cols-12 gap-y-8 lg:gap-x-12 mt-6 md:mt-8 lg:mt-14">
           <div className="h-44 col-span-12 md:col-span-6 py-5 px-3 shadow-md rounded-md flex flex-col justify-center items-center relative">
             {isLoading ? (
-              <>
-                <img
-                  src={
-                    shopkeeperProfileFromDb?.profileImage
-                      ? shopkeeperProfileFromDb?.profileImage
-                      : demoPic
-                  }
-                  alt={name}
-                  className="h-20 w-20 rounded-full object-cover"
-                />
-                <h3 className="text-xl font-semibold mt-4">{name}</h3>
-                <h3 className="text-sm">{shopkeepersEmail}</h3>
-              </>
+              <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-red-300"></div>
             ) : (
               <>
                 <img
@@ -405,47 +393,41 @@ const Profile = () => {
               ) : null}
             </div>
           </div>
-          <div className="h-44 col-span-12 md:col-span-6 py-5 px-3 shadow-md rounded-md flex flex-col justify-center items-center gap-y-1">
-            <h2 className="text-center font-semibold text-xl underline">
-              All time summary
-            </h2>
-            <div className="flex items-center space-x-4">
-              <p className="text-md font-semibold">Total Sells :</p>
-              {isLoading ? (
-                <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-red-300"></div>
-              ) : (
+          {isLoading ? (
+            <div className="h-44 col-span-12 md:col-span-6 py-5 px-3 shadow-md rounded-md flex flex-col justify-center items-center gap-y-1">
+              <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-red-300"></div>{' '}
+            </div>
+          ) : (
+            <div className="h-44 col-span-12 md:col-span-6 py-5 px-3 shadow-md rounded-md flex flex-col justify-center items-center gap-y-1">
+              <h2 className="text-center font-semibold text-xl underline">
+                All time summary
+              </h2>
+              <div className="flex items-center space-x-4">
+                <p className="text-md font-semibold">Total Sells :</p>
                 <div>
                   <h3 className={`${Styles.gradientTitle} text-xl font-bold`}>
                     {data?.data?.meta?.totalSellGenerated}
                   </h3>
                 </div>
-              )}
-            </div>
-            <div className="flex items-center space-x-4">
-              <p className="text-md font-semibold">Items Sold :</p>
-              {isLoading ? (
-                <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-red-300"></div>
-              ) : (
+              </div>
+              <div className="flex items-center space-x-4">
+                <p className="text-md font-semibold">Items Sold :</p>
                 <div>
                   <h3 className={`${Styles.gradientTitle} text-xl font-bold`}>
                     {data?.data?.meta?.totalItemSold}
                   </h3>
                 </div>
-              )}
-            </div>
-            <div className="flex items-center space-x-4">
-              <p className="text-md font-semibold">Total Revenue :</p>
-              {isLoading ? (
-                <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-red-300"></div>
-              ) : (
+              </div>
+              <div className="flex items-center space-x-4">
+                <p className="text-md font-semibold">Total Revenue :</p>
                 <div>
                   <h3 className={`${Styles.gradientTitle} text-xl font-bold`}>
                     {data?.data?.meta?.totalRevenue}
                   </h3>
                 </div>
-              )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
