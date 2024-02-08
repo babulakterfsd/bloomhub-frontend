@@ -3,6 +3,7 @@ import {
   useDeleteProductMutation,
   useGetProductsQuery,
 } from '@/redux/api/productApi';
+
 import { useCurrentShopkeeper } from '@/redux/features/authSlice';
 import { useAppSelector } from '@/redux/hook';
 import { TProduct, TShopkeeper } from '@/types/commonTypes';
@@ -29,8 +30,8 @@ const AllProductsContainer = () => {
   const [filterByArrangementStyle, setFilterByArrangementStyle] =
     useState<string>('');
   const [filterByOccasion, setFilterByOccasion] = useState<string>('');
-  // const [page, setPage] = useState<string>('1');
-  // const [limit, setLimit] = useState<string>('20');
+  const [page, setPage] = useState<string>('1');
+  const limit = '5';
   const [deleteContainer, setDeleteContainer] = useState([] as string[]);
   const [isMultipleDeleteActive, setIsMultipleDeleteActive] = useState(false);
   const shopkeeper = useAppSelector(useCurrentShopkeeper);
@@ -46,9 +47,6 @@ const AllProductsContainer = () => {
 
   const [deleteProduct] = useDeleteProductMutation();
   const [deleteMultipleProducts] = useDeleteMultipleProductsMutation();
-
-  let page = '1';
-  let limit = '30';
 
   const handleMultipleDelete = async (ids: string[]) => {
     const allow = window.confirm(
@@ -146,6 +144,41 @@ const AllProductsContainer = () => {
     return keyValuePairs.join('&');
   };
 
+  let queryParams = createQueryString(allFilters);
+
+  useEffect(() => {
+    queryParams = createQueryString({
+      page,
+      limit,
+      shopkeepersEmail,
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+      minPrice: filterPriceFrom,
+      maxPrice: filterPriceTo,
+      bloomDateFrom: filterBloomdateFrom,
+      bloomDateTo: filterBloomdateTo,
+      color: filterByColor,
+      type: filterByType,
+      size: filterBySize,
+      fragrance: filterByFragrance,
+      arrangementStyle: filterByArrangementStyle,
+      occasion: filterByOccasion,
+    });
+  }, [
+    page,
+    limit,
+    filterPriceFrom,
+    filterPriceTo,
+    filterBloomdateFrom,
+    filterBloomdateTo,
+    filterByColor,
+    filterByType,
+    filterBySize,
+    filterByFragrance,
+    filterByArrangementStyle,
+    filterByOccasion,
+  ]);
+
   const handleResetFilters = () => {
     setFilterPriceFrom('');
     setFilterPriceTo('');
@@ -177,13 +210,16 @@ const AllProductsContainer = () => {
     };
   };
 
-  const { data, error, isLoading } = useGetProductsQuery(
-    createQueryString(allFilters)
-  );
+  const { data, error, isLoading } = useGetProductsQuery(queryParams);
 
-  const products = data?.data?.data;
-  // const totalItems = data?.data?.meta?.total;
-  // const totalPages = Math.ceil(Number(totalItems) / Number(limit));
+  let products = data?.data?.data;
+
+  const totalItems = data?.data?.meta?.total;
+  const totalPages = Math.ceil(Number(totalItems) / Number(limit));
+
+  const handlePageChange = (page: number) => {
+    setPage(page.toString());
+  };
 
   return (
     <div className="mb-10 lg:mb-24 lg:mt-16 lg:shadow-md lg:rounded-md lg:py-5 lg:px-6 lg:pb-8">
@@ -539,15 +575,10 @@ const AllProductsContainer = () => {
                   <div className="flex items-center">
                     <input
                       id="select-all"
+                      disabled={true}
                       type="checkbox"
-                      className="w-4 h-4 border-none rounded focus:outline-none"
+                      className="w-4 h-4 border-none rounded focus:outline-none opacity-0"
                       onChange={(e) => handleSelectAllProductCheckbox(e)}
-                      checked={
-                        deleteContainer?.length == products?.length &&
-                        deleteContainer?.length != 0
-                          ? true
-                          : false
-                      }
                     />
                     <label htmlFor="select-all" className="sr-only">
                       checkbox
@@ -563,7 +594,7 @@ const AllProductsContainer = () => {
                 <th scope="col" className="px-6 py-3">
                   Quantity
                 </th>
-                <th scope="col" className="px-6 py-3">
+                <th scope="col" className="px-6 py-3 hidden ">
                   Bloom Date
                 </th>
                 <th scope="col" className="px-6 py-3">
@@ -636,7 +667,7 @@ const AllProductsContainer = () => {
                       </th>
                       <td className="px-6 py-4">{`$${product.price}`}</td>
                       <td className="px-6 py-4">{product.quantity}</td>
-                      <td className="px-6 py-4">{product.bloomdate}</td>
+                      <td className="px-6 py-4 hidden">{product.bloomdate}</td>
                       <td className="px-6 py-4">{product.colors.join(', ')}</td>
                       <td className="px-6 py-4">{product.type}</td>
                       <td className="px-6 py-4">{product.sizes.join(', ')}</td>
@@ -669,6 +700,51 @@ const AllProductsContainer = () => {
                 : null}
             </tbody>
           </table>
+
+          {/* pagination */}
+          {isLoading || products?.length === 0 ? (
+            <div></div>
+          ) : (
+            <div
+              className={`flex justify-end items-center my-5 ${
+                products?.length < 5 ? 'mt-[323px]' : 'mt-4'
+              }`}
+            >
+              <button
+                className="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:cursor-not-allowed disabled:hover:bg-gray-200"
+                onClick={() => handlePageChange(Number(page) - 1)}
+                disabled={Number(page) === 1}
+              >
+                Prev
+              </button>
+              {[...Array(Math.min(totalPages, 5)).keys()].map((index) => {
+                const pageNumber = Number(page) - 2 + index;
+                // Check if pageNumber is within valid range and greater than 0
+                if (pageNumber > 0 && pageNumber <= totalPages) {
+                  return (
+                    <button
+                      key={pageNumber}
+                      className={`mx-2 px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:cursor-not-allowed disabled:hover:bg-gray-200 ${
+                        Number(page) === pageNumber ? 'font-bold' : ''
+                      }`}
+                      onClick={() => handlePageChange(pageNumber)}
+                      disabled={Number(page) === pageNumber}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                }
+                return null; // Render nothing for invalid pageNumber
+              })}
+              <button
+                className="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:cursor-not-allowed disabled:hover:bg-gray-200"
+                onClick={() => handlePageChange(Number(page) + 1)}
+                disabled={Number(page) === totalPages}
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -5,14 +5,16 @@ import {
 } from '@/redux/features/authSlice';
 import { useAppDispatch, useAppSelector } from '@/redux/hook';
 import { FieldValues, useForm } from 'react-hook-form';
+import { IoEyeOffOutline, IoEyeOutline } from 'react-icons/io5';
 import { toast } from 'sonner';
 import Styles from '../styles/home.module.css';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const { register, handleSubmit } = useForm();
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [login] = useLoginMutation();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -71,6 +73,19 @@ const Login = () => {
     }
   };
 
+  const toggleShowingPassword = () => {
+    const passwordInput = document.getElementById(
+      'password'
+    ) as HTMLInputElement;
+    if (passwordInput.type === 'password') {
+      passwordInput.type = 'text';
+      setIsPasswordVisible(true);
+    } else {
+      passwordInput.type = 'password';
+      setIsPasswordVisible(false);
+    }
+  };
+
   return (
     <div className="grid h-screen grid-cols-12">
       <div
@@ -85,6 +100,16 @@ const Login = () => {
           <h3 className="text-xl text-center font-semibold capitalize mb-6">
             Please login to continue !
           </h3>
+
+          <div className="shadow bg-gray-50 p-4 my-6 mx-auto rounded-md flex justify-center flex-col items-center">
+            <h5 className="text-red-300 underline">Demo Account</h5>
+            <p className="text-sm">
+              Email: <span className="font-semibold">xpawal@gmail.com</span>
+            </p>
+            <p className="text-sm">
+              Password: <span className="font-semibold">awal123</span>
+            </p>
+          </div>
 
           <form
             className="space-y-4 md:space-y-6"
@@ -105,7 +130,7 @@ const Login = () => {
                 {...register('email')}
               />
             </div>
-            <div>
+            <div className="relative">
               <label
                 htmlFor="password"
                 className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
@@ -119,6 +144,12 @@ const Login = () => {
                 className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white  focus:outline-none"
                 {...register('password')}
               />
+              <span
+                className="absolute cursor-pointer top-10 right-3"
+                onClick={toggleShowingPassword}
+              >
+                {isPasswordVisible ? <IoEyeOutline /> : <IoEyeOffOutline />}
+              </span>
             </div>
             <button
               type="submit"

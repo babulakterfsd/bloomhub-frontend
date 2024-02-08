@@ -12,7 +12,7 @@ const SellsSummary = () => {
   const { email: shopkeepersEmail } = shopkeeper as TShopkeeper;
 
   let page = '1';
-  let limit = '10';
+  let limit = '15';
 
   let allFilters = {
     page,

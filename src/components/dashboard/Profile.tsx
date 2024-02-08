@@ -15,6 +15,7 @@ import { useAppSelector } from '@/redux/hook';
 import { TShopkeeper, TTimeframe } from '@/types/commonTypes';
 import { useState } from 'react';
 import { CiEdit } from 'react-icons/ci';
+import { IoEyeOffOutline, IoEyeOutline } from 'react-icons/io5';
 import { RxCross2 } from 'react-icons/rx';
 import { toast } from 'sonner';
 import demoPic from '../../assets/images/babul.png';
@@ -27,6 +28,9 @@ const Profile = () => {
     useState<boolean>(false);
   const [showPasswordUpdateModal, setShowPasswordUpdateModal] =
     useState<boolean>(false);
+  const [isCurrentPasswordVisible, setIsCurrentPasswordVisible] =
+    useState(false);
+  const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
   const [currentPassword, setCurrentPassword] = useState<string>('');
   const [newPassword, setNewPassword] = useState<string>('');
   const [shopkeeperNewName, setShopkeeperNewName] = useState<string>('');
@@ -211,6 +215,31 @@ const Profile = () => {
           duration: 1500,
         });
       }
+    }
+  };
+
+  const toggleShowingCurrentPassword = () => {
+    const passwordInput = document.getElementById(
+      'currentpassword'
+    ) as HTMLInputElement;
+    if (passwordInput.type === 'password') {
+      passwordInput.type = 'text';
+      setIsCurrentPasswordVisible(true);
+    } else {
+      passwordInput.type = 'password';
+      setIsCurrentPasswordVisible(false);
+    }
+  };
+  const toggleShowingNewPassword = () => {
+    const passwordInput = document.getElementById(
+      'newpassword'
+    ) as HTMLInputElement;
+    if (passwordInput.type === 'password') {
+      passwordInput.type = 'text';
+      setIsNewPasswordVisible(true);
+    } else {
+      passwordInput.type = 'password';
+      setIsNewPasswordVisible(false);
     }
   };
 
@@ -448,7 +477,7 @@ const Profile = () => {
                         <form className="py-6 px-10">
                           <div className="grid gap-4 grid-cols-1 sm:gap-x-6 sm:gap-y-4">
                             {/*  current password */}
-                            <div className="w-full">
+                            <div className="w-full relative">
                               <label
                                 htmlFor="currentpassword"
                                 className="block mb-2 text-sm font-medium "
@@ -467,9 +496,19 @@ const Profile = () => {
                                   setCurrentPassword(e.target.value)
                                 }
                               />
+                              <span
+                                className="absolute cursor-pointer top-10 right-3"
+                                onClick={toggleShowingCurrentPassword}
+                              >
+                                {isCurrentPasswordVisible ? (
+                                  <IoEyeOutline />
+                                ) : (
+                                  <IoEyeOffOutline />
+                                )}
+                              </span>
                             </div>
                             {/* new password */}
-                            <div className="w-full">
+                            <div className="w-full relative">
                               <label
                                 htmlFor="newpassword"
                                 className="block mb-2 text-sm font-medium"
@@ -486,6 +525,16 @@ const Profile = () => {
                                 required
                                 onChange={(e) => setNewPassword(e.target.value)}
                               />
+                              <span
+                                className="absolute cursor-pointer top-10 right-3"
+                                onClick={toggleShowingNewPassword}
+                              >
+                                {isNewPasswordVisible ? (
+                                  <IoEyeOutline />
+                                ) : (
+                                  <IoEyeOffOutline />
+                                )}
+                              </span>
                             </div>
                           </div>
                           <button
