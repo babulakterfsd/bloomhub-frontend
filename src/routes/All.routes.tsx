@@ -1,5 +1,6 @@
 import DashboardLayout from '@/layouts/DashboardLayout';
 import MainLayout from '@/layouts/MainLayout';
+import ForgotPassword from '@/pages/ForgotPassword';
 import NotFound from '@/pages/NotFound';
 import { createBrowserRouter } from 'react-router-dom';
 import { dashboardRoutePaths } from './Dashboard.routes';
@@ -20,6 +21,10 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: dashboardRoutePaths,
+  },
+  {
+    path: '/forgot-password',
+    element: <ForgotPassword />,
   },
   {
     path: '*',
