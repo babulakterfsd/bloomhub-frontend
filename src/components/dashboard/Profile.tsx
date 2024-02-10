@@ -6,6 +6,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   useChangePasswordMutation,
+  useDeletePhotoMutation,
   useGetProfileQuery,
   useUpdateProfileMutation,
 } from '@/redux/api/authApi';
@@ -15,6 +16,7 @@ import { useAppSelector } from '@/redux/hook';
 import { TShopkeeper, TTimeframe } from '@/types/commonTypes';
 import { useState } from 'react';
 import { CiEdit } from 'react-icons/ci';
+import { FaTrash } from 'react-icons/fa6';
 import { IoEyeOffOutline, IoEyeOutline } from 'react-icons/io5';
 import { RxCross2 } from 'react-icons/rx';
 import { toast } from 'sonner';
@@ -39,6 +41,7 @@ const Profile = () => {
     useState(false);
   const [changePassword] = useChangePasswordMutation();
   const [updateProfile] = useUpdateProfileMutation();
+  const [deletePhoto] = useDeletePhotoMutation();
   const { data: profileData } = useGetProfileQuery(undefined);
   const shopkeeperProfileFromDb = profileData?.data;
   const shopkeeper = useAppSelector(useCurrentShopkeeper);
@@ -240,6 +243,63 @@ const Profile = () => {
     } else {
       passwordInput.type = 'password';
       setIsNewPasswordVisible(false);
+    }
+  };
+
+  const handleSelectProfilePicFromPhotos = async (photoUrl: string) => {
+    const allow = window.confirm(
+      'Are you sure you want to make this photo as profile picture?'
+    );
+
+    if (!allow) {
+      toast.error('Updating profile picture cancelled', {
+        position: 'top-right',
+        duration: 1500,
+      });
+      return;
+    } else {
+      const response = await updateProfile({
+        name: shopkeeperProfileFromDb?.name,
+        profileImage: photoUrl,
+      }).unwrap();
+
+      if (response?.statusCode === 200) {
+        toast.success('Profile photo updated successfully', {
+          position: 'top-right',
+          duration: 1500,
+        });
+      } else {
+        toast.error('Profile photo update failed', {
+          position: 'top-right',
+          duration: 1500,
+        });
+      }
+    }
+  };
+
+  const handleDeletePhoto = async (photoUrl: string) => {
+    const allow = window.confirm('Are you sure you want to delete this photo?');
+
+    if (!allow) {
+      toast.error('Photo deletion cancelled', {
+        position: 'top-right',
+        duration: 1500,
+      });
+      return;
+    } else {
+      const response = await deletePhoto(photoUrl).unwrap();
+
+      if (response?.statusCode === 200) {
+        toast.success('Photo deleted successfully', {
+          position: 'top-right',
+          duration: 1500,
+        });
+      } else {
+        toast.error('Photo deletion failed', {
+          position: 'top-right',
+          duration: 1500,
+        });
+      }
     }
   };
 
@@ -588,6 +648,36 @@ const Profile = () => {
               </div>
             </div>
           )}
+        </div>
+        <div className="shadow-sm mb-6 lg:mb-12 w-full mt-6 lg:mt-24  px-4 lg:px-10 py-3 lg:py-6 mx-auto">
+          <h4 className="font-semibold text-xl">Photos</h4>
+          {shopkeeperProfileFromDb?.photos?.length > 0 ? (
+            <div
+              className="grid grid-cols-12 gap-8 mt-4 overflow-x-hidden"
+              data-aos="fade-down"
+              data-aos-duration="1500"
+            >
+              {shopkeeperProfileFromDb?.photos?.map((photo: string) => (
+                <div
+                  className="col-span-12 md:col-span-6 lg:col-span-3 flex flex-col justify-between items-center rounded-md border p-4 transition-all duration-300 hover:cursor-pointer h-80 xl:h-72 relative group "
+                  key={Math.floor(Math.random() * 9999)}
+                >
+                  <img
+                    src={photo}
+                    alt="shopkeeper photo"
+                    className="w-full h-56 group-hover:mt-7 transition-all duration-300 object-cover rounded-md mt-4"
+                    onClick={() => handleSelectProfilePicFromPhotos(photo)}
+                  />
+                  <button
+                    className="absolute top-0 right-0 text-md text-red-300 hover:text-red-700 hover:transition-all duration-300 ease-in-out opacity-0 group-hover:opacity-100"
+                    onClick={() => handleDeletePhoto(photo)}
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

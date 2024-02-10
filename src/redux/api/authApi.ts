@@ -48,6 +48,16 @@ const authApi = baseApi.injectEndpoints({
       },
       invalidatesTags: ['shopkeeper'],
     }),
+    deletePhoto: builder.mutation({
+      query: (photoId) => {
+        return {
+          url: `/auth/delete-photo-from-profile`,
+          method: 'PUT',
+          body: { photoUrl: photoId },
+        };
+      },
+      invalidatesTags: ['shopkeeper'],
+    }),
   }),
 });
 
@@ -57,4 +67,5 @@ export const {
   useChangePasswordMutation,
   useUpdateProfileMutation,
   useGetProfileQuery,
+  useDeletePhotoMutation,
 } = authApi;
