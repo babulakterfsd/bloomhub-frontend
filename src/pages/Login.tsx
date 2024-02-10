@@ -25,7 +25,7 @@ const Login = () => {
   const { state } = useLocation();
 
   useEffect(() => {
-    fetch('https://bloomhub-backend.vercel.app/api/auth/verify-token', {
+    fetch('http://localhost:5000/api/auth/verify-token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -94,7 +94,7 @@ const Login = () => {
       return;
     } else {
       const response = await fetch(
-        'https://bloomhub-backend.vercel.app/api/auth/forgot-password',
+        'http://localhost:5000/api/auth/forgot-password',
         {
           method: 'POST',
           headers: {
