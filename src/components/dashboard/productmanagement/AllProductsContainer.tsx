@@ -31,7 +31,7 @@ const AllProductsContainer = () => {
     useState<string>('');
   const [filterByOccasion, setFilterByOccasion] = useState<string>('');
   const [page, setPage] = useState<string>('1');
-  const limit = '5';
+  const limit = '10';
   const [deleteContainer, setDeleteContainer] = useState([] as string[]);
   const [isMultipleDeleteActive, setIsMultipleDeleteActive] = useState(false);
   const shopkeeper = useAppSelector(useCurrentShopkeeper);
